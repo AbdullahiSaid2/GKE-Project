@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-app-3
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: html-app-3
+  template:
+    metadata:
+      labels:
+        app: html-app-3
+    spec:
+      serviceAccountName: ksa-2
+      containers:
+      - name: html-app
+        image: abdullahi95/web-app:v1
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secret-2
+              key: username
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: db-secret-2
+              key: password
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: db-secret-2
+              key: database
+      - name: cloud-sql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.31.2
+        command:
+          - "/cloud_sql_proxy"
+          - "-log_debug_stdout"
+          - "-instances=aisd-359714:europe-west2:mysql-2=tcp:3306"
+        securityContext:
+          runAsNonRoot: true
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu:    "1"
